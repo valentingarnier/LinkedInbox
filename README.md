@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LinkedInbox
+
+A Next.js application that analyzes your LinkedIn messages to provide insights on outreach effectiveness, prospect engagement, and conversation patterns.
+
+## Features
+
+- **Message Import**: Upload your LinkedIn messages export (CSV) for analysis
+- **Conversation View**: Browse and search through all your LinkedIn conversations
+- **AI-Powered Analysis**: Uses OpenAI's GPT-4o-mini to analyze:
+  - **Prospect Status**: Automatically categorize prospects (interested, ghosted, meeting scheduled, etc.)
+  - **Outreach Quality Score**: Get detailed feedback on your cold outreach effectiveness
+- **Analytics Dashboard**: View aggregate metrics including:
+  - Response rate
+  - Average engagement rate
+  - Average response time
+  - Outreach score trends
+  - Hot prospects list
+
+## Tech Stack
+
+- **Frontend**: Next.js 16, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes, Supabase (PostgreSQL)
+- **Auth**: Supabase Auth with Google OAuth
+- **AI**: LangChain.js with OpenAI (gpt-4o-mini)
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   │   ├── analyze/       # Analysis trigger and status endpoints
+│   │   ├── conversations/ # Conversation CRUD
+│   │   └── users/         # User management
+│   ├── auth/              # Auth callback
+│   ├── dashboard/         # Main dashboard page
+│   └── login/             # Login page
+├── components/            # React components
+│   ├── layout/           # Layout components (Header, Logo)
+│   └── ui/               # Reusable UI components (Avatar, Button, Spinner)
+├── hooks/                 # Custom React hooks
+│   ├── useAnalysis.ts    # Analysis state and polling
+│   └── useConversations.ts # Conversation data management
+├── lib/                   # Utilities and configurations
+│   ├── supabase/         # Supabase client configuration
+│   ├── parseMessages.ts  # CSV parsing logic
+│   └── utils.ts          # Date formatting utilities
+├── server/               # Backend services
+│   └── services/         # Business logic
+│       └── analysis/     # LLM and metrics services
+└── types/                # TypeScript type definitions
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+
+- Supabase account
+- OpenAI API key
+- Google OAuth credentials (for Supabase Auth)
+
+### Environment Variables
+
+Create a `.env.local` file:
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# OpenAI
+OPENAI_API_KEY=sk-your-openai-api-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Database Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Create a new Supabase project
+2. Run the migrations in order:
+   ```
+   supabase/migrations/001_initial_schema.sql
+   supabase/migrations/002_analysis_fields.sql
+   supabase/migrations/003_fix_profile_trigger.sql
+   supabase/migrations/004_add_profile_insert_policy.sql
+   ```
+3. Configure Google OAuth in Supabase Authentication settings
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Installation
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Usage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Sign in** with your Google account
+2. **Enter your LinkedIn name** (exactly as it appears on LinkedIn)
+3. **Export your messages** from LinkedIn:
+   - Go to LinkedIn → Settings → Data Privacy → Get a copy of your data
+   - Select "Messages" and download your archive
+   - Extract the ZIP and find `messages.csv`
+4. **Upload the CSV** file
+5. **Click "Analyze"** to start AI analysis
+6. **View insights** in the dashboard
 
-## Deploy on Vercel
+## API Endpoints
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/analyze` | POST | Trigger analysis for pending conversations |
+| `/api/analyze/status` | GET | Get analysis progress status |
+| `/api/conversations` | GET | List all conversations |
+| `/api/conversations/[id]` | GET | Get conversation with messages |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Analysis Metrics
+
+### Prospect Status Categories
+- `no_response` - No reply received
+- `engaged` - Active conversation
+- `interested` - Positive signals shown
+- `meeting_scheduled` - Call/meeting agreed
+- `not_interested` - Declined
+- `wrong_person` - Redirected elsewhere
+- `ghosted` - Stopped responding after engagement
+- `closed` - Conversation concluded
+
+### Outreach Score Dimensions (0-100)
+- **Personalization** - Research evident in message
+- **Value Proposition** - Clear benefit articulated
+- **Call to Action** - Clear, low-friction next step
+- **Tone** - Professional yet human
+- **Brevity** - Concise and respectful
+- **Originality** - Genuine vs template feeling
+
+## License
+
+MIT
