@@ -71,35 +71,48 @@ export function computeBasicMetrics(
 
   // Follow-up pressure score (0-10)
   // Count consecutive messages from me without a reply
+  // First message doesn't count as a follow-up, only subsequent ones
   let pressureScore = 0;
   let currentStreak = 0;
   let maxStreak = 0;
+  let hadProspectReply = false;
 
   sortedMessages.forEach((msg) => {
     if (msg.sender.toLowerCase().trim() === normalizedUserName) {
       currentStreak++;
-      if (currentStreak >= 2) {
+      // Only count as follow-up pressure if:
+      // 1. It's at least the 2nd consecutive message from me, AND
+      // 2. Either: we've had a prospect reply before OR it's not the very first messages
+      if (currentStreak >= 2 && (hadProspectReply || currentStreak > 1)) {
         pressureScore += currentStreak - 1;
       }
       maxStreak = Math.max(maxStreak, currentStreak);
     } else {
+      hadProspectReply = true;
       currentStreak = 0;
     }
   });
 
   const followUpPressureScore = Math.min(10, pressureScore);
 
-  // Consecutive follow-ups at the end (for status determination)
-  let consecutiveFollowUps = 0;
+  // Consecutive messages from me at the end
+  // Subtract 1 because the initial message isn't a "follow-up"
+  let consecutiveMessagesAtEnd = 0;
   for (let i = sortedMessages.length - 1; i >= 0; i--) {
     if (
       sortedMessages[i].sender.toLowerCase().trim() === normalizedUserName
     ) {
-      consecutiveFollowUps++;
+      consecutiveMessagesAtEnd++;
     } else {
       break;
     }
   }
+
+  // Follow-ups = consecutive messages - 1 (first message is initial outreach, not a follow-up)
+  // But only if there was a prospect reply at some point, otherwise it's all initial outreach attempts
+  const consecutiveFollowUps = hadProspectReply
+    ? Math.max(0, consecutiveMessagesAtEnd - 1)
+    : Math.max(0, consecutiveMessagesAtEnd - 1); // After initial outreach, subsequent are follow-ups
 
   return {
     engagementRate: Math.round(engagementRate * 100) / 100,

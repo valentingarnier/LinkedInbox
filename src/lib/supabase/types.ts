@@ -62,6 +62,9 @@ export interface Database {
           analysis_status: AnalysisStatus;
           analysis_error: string | null;
           analyzed_at: string | null;
+          // Cold outreach classification
+          is_cold_outreach: boolean | null;
+          cold_outreach_reasoning: string | null;
           // Basic metrics
           engagement_rate: number | null;
           avg_response_time_minutes: number | null;
@@ -97,6 +100,8 @@ export interface Database {
           analysis_status?: AnalysisStatus;
           analysis_error?: string | null;
           analyzed_at?: string | null;
+          is_cold_outreach?: boolean | null;
+          cold_outreach_reasoning?: string | null;
           engagement_rate?: number | null;
           avg_response_time_minutes?: number | null;
           follow_up_pressure_score?: number | null;
@@ -129,6 +134,8 @@ export interface Database {
           analysis_status?: AnalysisStatus;
           analysis_error?: string | null;
           analyzed_at?: string | null;
+          is_cold_outreach?: boolean | null;
+          cold_outreach_reasoning?: string | null;
           engagement_rate?: number | null;
           avg_response_time_minutes?: number | null;
           follow_up_pressure_score?: number | null;
@@ -238,6 +245,10 @@ export interface Database {
           market_pull_score: number | null;
           hot_prospects: string[] | null;
           computed_at: string;
+          // Analysis progress tracking
+          analysis_stage: string | null;
+          analysis_progress: number | null;
+          analysis_total: number | null;
         };
         Insert: {
           id?: string;
@@ -251,6 +262,9 @@ export interface Database {
           market_pull_score?: number | null;
           hot_prospects?: string[] | null;
           computed_at?: string;
+          analysis_stage?: string | null;
+          analysis_progress?: number | null;
+          analysis_total?: number | null;
         };
         Update: {
           id?: string;
@@ -264,6 +278,9 @@ export interface Database {
           market_pull_score?: number | null;
           hot_prospects?: string[] | null;
           computed_at?: string;
+          analysis_stage?: string | null;
+          analysis_progress?: number | null;
+          analysis_total?: number | null;
         };
       };
     };

@@ -21,6 +21,7 @@ export interface Conversation {
   messageCount: number;
   // Analysis fields (optional, from DB)
   analysisStatus?: AnalysisStatus;
+  isColdOutreach?: boolean | null;
   engagementRate?: number | null;
   prospectStatus?: ProspectStatus;
   outreachScoreOverall?: number | null;

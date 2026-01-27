@@ -16,20 +16,33 @@ export function useConversations({ userId, initialConversations }: UseConversati
   const [selectedMessages, setSelectedMessages] = useState<Map<string, LinkedInMessage[]>>(new Map());
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
-  const displayConversations: LocalConversation[] = localMessagesData
+  // Filter to show only cold outreach conversations (or pending/analyzing ones)
+  const filteredConversations = localMessagesData
     ? localMessagesData.conversations
-    : conversations.map((conv) => ({
-        id: conv.id,
-        title: conv.title,
-        participants: conv.participants,
-        messages: selectedMessages.get(conv.id) || [],
-        lastMessageDate: new Date(conv.last_message_date),
-        messageCount: conv.message_count,
-        analysisStatus: conv.analysis_status,
-        engagementRate: conv.engagement_rate,
-        prospectStatus: conv.prospect_status,
-        outreachScoreOverall: conv.outreach_score_overall,
-      }));
+    : conversations
+        .filter((conv) => {
+          // Show if not yet analyzed (pending/analyzing)
+          if (conv.analysis_status === "pending" || conv.analysis_status === "analyzing") {
+            return true;
+          }
+          // Show if it's confirmed cold outreach
+          return conv.is_cold_outreach === true;
+        })
+        .map((conv) => ({
+          id: conv.id,
+          title: conv.title,
+          participants: conv.participants,
+          messages: selectedMessages.get(conv.id) || [],
+          lastMessageDate: new Date(conv.last_message_date),
+          messageCount: conv.message_count,
+          analysisStatus: conv.analysis_status,
+          isColdOutreach: conv.is_cold_outreach,
+          engagementRate: conv.engagement_rate,
+          prospectStatus: conv.prospect_status,
+          outreachScoreOverall: conv.outreach_score_overall,
+        }));
+
+  const displayConversations: LocalConversation[] = filteredConversations;
 
   const selectedConversation = displayConversations.find(
     (c) => c.id === selectedConversationId

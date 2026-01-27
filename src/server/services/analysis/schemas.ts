@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+// Cold Outreach Classification Schema
+export const ColdOutreachClassificationSchema = z.object({
+  is_cold_outreach: z.boolean().describe(
+    "True if this is a cold outreach/sales conversation initiated by the user. False if it's a personal chat, networking with known contacts, inbound inquiry, job-related, or any non-sales conversation."
+  ),
+  reasoning: z.string().describe("Brief explanation for the classification"),
+});
+
+export type ColdOutreachClassificationResult = z.infer<typeof ColdOutreachClassificationSchema>;
+
 // Prospect Status Schema - forces LLM to output valid enum
 export const ProspectStatusSchema = z.object({
   status: z.enum([

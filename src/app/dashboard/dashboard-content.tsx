@@ -63,7 +63,13 @@ export function DashboardContent({
       .select("*")
       .eq("user_id", user.id)
       .single();
-    if (data) setAnalytics(data);
+    const analyticsData = data as AnalyticsSummaryType | null;
+    // Only set analytics if there are conversations with data
+    if (analyticsData && analyticsData.total_conversations && analyticsData.total_conversations > 0) {
+      setAnalytics(analyticsData);
+    } else {
+      setAnalytics(null);
+    }
   }, [user.id]);
 
   const handleAnalysisComplete = useCallback(async () => {
@@ -109,6 +115,8 @@ export function DashboardContent({
   };
 
   const handleDataLoaded = async (data: Parameters<typeof importConversations>[0]) => {
+    // Clear old analytics when importing new data
+    setAnalytics(null);
     await importConversations(data);
     setShowImport(false);
     await fetchStatus();
@@ -119,6 +127,35 @@ export function DashboardContent({
     await refreshConversations();
     await refreshAnalytics();
     await fetchStatus();
+  };
+
+  const handleReanalyze = async () => {
+    if (!confirm("This will reset all analysis data and re-analyze all conversations. Continue?")) {
+      return;
+    }
+
+    try {
+      // Reset all conversations to pending
+      const response = await fetch("/api/analyze/reset", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setAnalytics(null);
+        alert(`Failed to reset: ${data.error || "Unknown error"}`);
+        return;
+      }
+
+      // Clear local state
+      setAnalytics(null);
+      clearLocalData();
+      await refreshConversations();
+      await fetchStatus();
+    } catch (err) {
+      alert(`Error: ${String(err)}`);
+    }
   };
 
   // Onboarding view
@@ -214,22 +251,40 @@ export function DashboardContent({
             )}
 
             {isAnalyzing && (
-              <span className="text-sm text-blue-600 flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Spinner size="sm" />
-                Analyzing... {analysisStatus && `${analysisStatus.completed}/${analysisStatus.total}`}
-              </span>
+                <div className="text-sm">
+                  <span className="text-purple-600 font-medium">
+                    {analysisStatus?.stageLabel || "Analyzing..."}
+                  </span>
+                  {analysisStatus && analysisStatus.progress !== null && analysisStatus.progressTotal !== null && (
+                    <span className="text-zinc-400 ml-2">
+                      ({analysisStatus.progress}/{analysisStatus.progressTotal})
+                    </span>
+                  )}
+                </div>
+              </div>
             )}
 
             {!isAnalyzing && analysisStatus && analysisStatus.completed > 0 && (
-              <button
-                onClick={handleRefresh}
-                className="text-zinc-500 hover:text-zinc-700 transition-colors p-1"
-                title="Refresh data"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
+              <>
+                <button
+                  onClick={handleRefresh}
+                  className="text-zinc-500 hover:text-zinc-700 transition-colors p-1"
+                  title="Refresh data"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+                <button
+                  onClick={handleReanalyze}
+                  className="text-xs text-zinc-500 hover:text-orange-600 transition-colors px-2 py-1 rounded hover:bg-orange-50"
+                  title="Re-analyze all conversations (reset and run again)"
+                >
+                  Re-analyze
+                </button>
+              </>
             )}
 
             <Button variant="ghost" onClick={() => setShowImport(true)}>
@@ -245,7 +300,7 @@ export function DashboardContent({
         </div>
       </Header>
 
-      {analytics && (
+      {analytics && displayConversations.length > 0 && (!analysisStatus || analysisStatus.pending === 0) && (
         <AnalyticsSummary analytics={analytics} isLoading={isAnalyzing} />
       )}
 

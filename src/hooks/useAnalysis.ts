@@ -2,6 +2,24 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 
+export type AnalysisStage = 
+  | "preparing"
+  | "computing_metrics"
+  | "classifying_outreach"
+  | "analyzing_prospects"
+  | "computing_global"
+  | "complete"
+  | null;
+
+export const STAGE_LABELS: Record<NonNullable<AnalysisStage>, string> = {
+  preparing: "Preparing conversations...",
+  computing_metrics: "Computing engagement metrics...",
+  classifying_outreach: "Identifying cold outreach conversations...",
+  analyzing_prospects: "Analyzing prospect status & outreach quality...",
+  computing_global: "Computing global analytics...",
+  complete: "Analysis complete",
+};
+
 export interface AnalysisStatus {
   total: number;
   pending: number;
@@ -10,6 +28,11 @@ export interface AnalysisStatus {
   failed: number;
   isComplete: boolean;
   error?: string;
+  // Progress tracking
+  stage: AnalysisStage;
+  stageLabel: string | null;
+  progress: number | null;
+  progressTotal: number | null;
 }
 
 interface UseAnalysisOptions {
@@ -52,7 +75,9 @@ export function useAnalysis({ userId, onComplete, pollingInterval = 3000 }: UseA
       setError(null);
 
       // Check completion using ref to avoid stale closure
-      if (data.isComplete && isAnalyzingRef.current) {
+      // Complete when either isComplete is true OR stage is "complete"
+      const analysisFinished = data.isComplete || data.stage === "complete";
+      if (analysisFinished && isAnalyzingRef.current) {
         setIsAnalyzing(false);
         onCompleteRef.current?.();
       }

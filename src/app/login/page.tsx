@@ -99,30 +99,42 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-12 flex-col justify-between relative overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-3xl" />
-        </div>
+      <div className="hidden lg:flex lg:w-1/2 bg-[#0a0612] p-12 flex-col justify-between relative overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0a2e] via-[#0d0618] to-[#0a0612]" />
+        
+        {/* Animated orbs */}
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-purple-600/20 animate-float animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-violet-500/15 animate-float-delayed animate-pulse-glow" style={{ animationDelay: '-5s' }} />
+        <div className="absolute top-1/2 right-1/3 w-[300px] h-[300px] rounded-full bg-fuchsia-600/10 animate-float" style={{ animationDelay: '-10s' }} />
+        
+        {/* Accent glow lines */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-gradient-to-b from-transparent via-purple-500/20 to-transparent" />
+        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
+        
+        {/* Grid pattern */}
+        <div className="absolute inset-0 grid-pattern opacity-50" />
+        
+        {/* Noise texture */}
+        <div className="noise-overlay" />
         
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-10 h-10 bg-purple-500/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-purple-500/30">
+              <svg className="w-6 h-6 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
             </div>
-            <span className="text-xl font-semibold text-white">LinkedInbox</span>
+            <span className="text-xl font-semibold text-white/90 tracking-tight">LinkedInbox</span>
           </div>
         </div>
         
         <div className="relative z-10 space-y-6">
-          <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
+          <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
             Your LinkedIn outreach,<br />
-            <span className="text-blue-200">analyzed.</span>
+            <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-purple-300 bg-clip-text text-transparent animate-shimmer">analyzed.</span>
           </h1>
-          <p className="text-lg text-blue-100 max-w-md leading-relaxed">
+          <p className="text-lg text-purple-200/70 max-w-md leading-relaxed">
             Import your LinkedIn messages and get AI-powered insights on response rates, 
             outreach quality, and prospect engagement.
           </p>
@@ -130,32 +142,32 @@ export default function LoginPage() {
           <div className="flex items-center gap-8 pt-4">
             <div className="text-center">
               <div className="text-3xl font-bold text-white">50+</div>
-              <div className="text-sm text-blue-200">Metrics tracked</div>
+              <div className="text-sm text-purple-300/60">Metrics tracked</div>
             </div>
-            <div className="w-px h-12 bg-blue-400/30" />
+            <div className="w-px h-12 bg-purple-500/20" />
             <div className="text-center">
               <div className="text-3xl font-bold text-white">AI</div>
-              <div className="text-sm text-blue-200">Powered analysis</div>
+              <div className="text-sm text-purple-300/60">Powered analysis</div>
             </div>
-            <div className="w-px h-12 bg-blue-400/30" />
+            <div className="w-px h-12 bg-purple-500/20" />
             <div className="text-center">
               <div className="text-3xl font-bold text-white">100%</div>
-              <div className="text-sm text-blue-200">Private & secure</div>
+              <div className="text-sm text-purple-300/60">Private & secure</div>
             </div>
           </div>
         </div>
         
-        <div className="relative z-10 text-sm text-blue-200">
+        <div className="relative z-10 text-sm text-purple-300/50">
           Trusted by sales professionals worldwide
         </div>
       </div>
 
       {/* Right side - Login form */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-zinc-50">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-[#faf9fb]">
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-10">
-            <div className="w-14 h-14 mx-auto mb-4 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <div className="w-14 h-14 mx-auto mb-4 bg-gradient-to-br from-purple-600 to-violet-700 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25">
               <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
@@ -186,11 +198,11 @@ export default function LoginPage() {
           <div className="mt-8 text-center">
             <p className="text-xs text-zinc-400 leading-relaxed">
               By continuing, you agree to our{" "}
-              <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">
+              <a href="#" className="text-purple-600 hover:text-purple-800 transition-colors">
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="#" className="text-zinc-600 hover:text-zinc-900 transition-colors">
+              <a href="#" className="text-purple-600 hover:text-purple-800 transition-colors">
                 Privacy Policy
               </a>
             </p>

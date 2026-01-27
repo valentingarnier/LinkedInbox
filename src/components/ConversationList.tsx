@@ -65,7 +65,8 @@ export function ConversationList({
       <div className="flex-1 overflow-y-auto">
         {conversations.map((conversation) => {
           const displayName = getOtherParticipant(conversation, currentUserName);
-          const isAnalyzingConv = conversation.analysisStatus === "pending" || conversation.analysisStatus === "analyzing";
+          // Only show spinner when actively analyzing, not when pending
+          const isAnalyzingConv = conversation.analysisStatus === "analyzing";
           const isCompleted = conversation.analysisStatus === "completed";
 
           return (
