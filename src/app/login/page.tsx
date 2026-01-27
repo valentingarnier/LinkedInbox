@@ -131,34 +131,38 @@ export default function LoginPage() {
         
         <div className="relative z-10 space-y-6">
           <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
-            Your LinkedIn outreach,<br />
-            <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-purple-300 bg-clip-text text-transparent animate-shimmer">analyzed.</span>
+            Does anyone actually<br />
+            <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-purple-300 bg-clip-text text-transparent animate-shimmer">want this?</span>
           </h1>
           <p className="text-lg text-purple-200/70 max-w-md leading-relaxed">
-            Import your LinkedIn messages and get AI-powered insights on response rates, 
-            outreach quality, and prospect engagement.
+            You've reached out to hundreds of people. But do you really know how you're performing? 
+            Is your problem painful enough? Is your cold outreach actually validating your idea—or just burning leads?
+          </p>
+          <p className="text-base text-purple-300/50 max-w-md leading-relaxed">
+            Import your LinkedIn messages and get the truth: market pull, response patterns, 
+            and whether people care about what you're building.
           </p>
           
           <div className="flex items-center gap-8 pt-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">50+</div>
-              <div className="text-sm text-purple-300/60">Metrics tracked</div>
+              <div className="text-3xl font-bold text-white">Market</div>
+              <div className="text-sm text-purple-300/60">Pull score</div>
             </div>
             <div className="w-px h-12 bg-purple-500/20" />
             <div className="text-center">
               <div className="text-3xl font-bold text-white">AI</div>
-              <div className="text-sm text-purple-300/60">Powered analysis</div>
+              <div className="text-sm text-purple-300/60">Prospect analysis</div>
             </div>
             <div className="w-px h-12 bg-purple-500/20" />
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">100%</div>
-              <div className="text-sm text-purple-300/60">Private & secure</div>
+              <div className="text-3xl font-bold text-white">Truth</div>
+              <div className="text-sm text-purple-300/60">Not vanity metrics</div>
             </div>
           </div>
         </div>
         
         <div className="relative z-10 text-sm text-purple-300/50">
-          Trusted by sales professionals worldwide
+          For founders validating ideas through cold outreach
         </div>
       </div>
 
@@ -173,16 +177,16 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-zinc-900">LinkedInbox</h1>
-            <p className="text-zinc-500 text-sm mt-1">Your LinkedIn outreach, analyzed</p>
+            <p className="text-zinc-500 text-sm mt-1">Is your outreach validating your idea?</p>
           </div>
 
           {/* Form header */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-semibold text-zinc-900 mb-2">
-              Welcome back
+              Get the truth
             </h2>
             <p className="text-zinc-500 text-sm">
-              Sign in to access your conversation insights
+              See if your cold outreach is actually working
             </p>
           </div>
 
