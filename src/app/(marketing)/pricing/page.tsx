@@ -45,25 +45,6 @@ const PLANS = [
     highlighted: true,
     badge: "Most Popular",
   },
-  {
-    name: "Team",
-    price: "$79",
-    period: "/month",
-    description: "For teams running outreach together and sharing insights.",
-    features: [
-      "Everything in Pro",
-      "Up to 5 team members",
-      "Shared dashboards",
-      "Team analytics",
-      "Comparative insights",
-      "Priority support",
-      "Custom onboarding",
-    ],
-    notIncluded: [],
-    cta: "Contact Sales",
-    href: "mailto:hello@linkedinbox.co",
-    highlighted: false,
-  },
 ];
 
 function PricingHero() {
@@ -160,8 +141,8 @@ function PricingCard({
 function PricingGrid() {
   return (
     <section className="py-8 md:py-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid md:grid-cols-3 gap-4 md:gap-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-8">
           {PLANS.map((plan) => (
             <PricingCard key={plan.name} plan={plan} />
           ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { createClient, fetchAllRows } from "@/lib/supabase/client";
 import type { Conversation, Message } from "@/lib/supabase/types";
 import type { LinkedInMessage, MessagesData, Conversation as LocalConversation } from "@/types/linkedin";
@@ -52,9 +52,7 @@ export function useConversations({ userId, initialConversations, onImportProgres
     (c) => c.id === selectedConversationId
   ) ?? null;
 
-  const selectConversation = useCallback(async (conversationId: string) => {
-    setSelectedConversationId(conversationId);
-
+  const fetchMessagesForConversation = useCallback(async (conversationId: string) => {
     if (localMessagesData) return;
     if (selectedMessages.has(conversationId)) return;
 
@@ -84,6 +82,20 @@ export function useConversations({ userId, initialConversations, onImportProgres
       setSelectedMessages((prev) => new Map(prev).set(conversationId, localMessages));
     }
   }, [localMessagesData, selectedMessages]);
+
+  // Auto-select first conversation when available and none selected
+  useEffect(() => {
+    if (!selectedConversationId && displayConversations.length > 0) {
+      const firstConvId = displayConversations[0].id;
+      setSelectedConversationId(firstConvId);
+      fetchMessagesForConversation(firstConvId);
+    }
+  }, [selectedConversationId, displayConversations, fetchMessagesForConversation]);
+
+  const selectConversation = useCallback(async (conversationId: string) => {
+    setSelectedConversationId(conversationId);
+    await fetchMessagesForConversation(conversationId);
+  }, [fetchMessagesForConversation]);
 
   const refreshConversations = useCallback(async () => {
     setLocalMessagesData(null);
