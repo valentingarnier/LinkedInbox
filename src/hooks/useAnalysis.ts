@@ -8,6 +8,7 @@ export type AnalysisStage =
   | "classifying_outreach"
   | "analyzing_prospects"
   | "computing_global"
+  | "analyzing_templates"
   | "complete"
   | null;
 
@@ -17,6 +18,7 @@ export const STAGE_LABELS: Record<NonNullable<AnalysisStage>, string> = {
   classifying_outreach: "Identifying cold outreach conversations...",
   analyzing_prospects: "Analyzing prospect status & outreach quality...",
   computing_global: "Computing global analytics...",
+  analyzing_templates: "Analyzing message templates...",
   complete: "Analysis complete",
 };
 
@@ -90,14 +92,17 @@ export function useAnalysis({ userId, onComplete, pollingInterval = 3000 }: UseA
   }, []); // No dependencies - uses refs
 
   const triggerAnalysis = useCallback(async () => {
+    console.log("[Analysis] Starting analysis...");
     setIsAnalyzing(true);
     setError(null);
 
     try {
+      console.log("[Analysis] Calling POST /api/analyze");
       const response = await fetch("/api/analyze", {
         method: "POST",
         credentials: "include",
       });
+      console.log("[Analysis] Response status:", response.status);
 
       if (!response.ok) {
         const text = await response.text();

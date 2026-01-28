@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { Effect } from "effect";
+import {
+  SupabaseServiceLive,
+  getAuthenticatedUser,
+  querySingle,
+  query,
+} from "@/server/effect";
+import { DatabaseError, UnauthorizedError, NotFoundError } from "@/server/effect/errors";
 import type { Conversation, Message } from "@/lib/supabase/types";
 
 interface RouteParams {
@@ -10,53 +17,55 @@ interface RouteParams {
  * GET /api/conversations/[id]
  * Returns a single conversation with its messages
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const db = supabase as any;
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+const getConversationProgram = (conversationId: string) =>
+  Effect.gen(function* () {
+    const user = yield* getAuthenticatedUser;
 
     // Get conversation
-    const { data: conversationData, error: convError } = await db
-      .from("conversations")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
-
-    const conversation = conversationData as Conversation | null;
-
-    if (convError || !conversation) {
-      return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
-    }
+    const conversation = yield* querySingle<Conversation>("conversation", (client) =>
+      client
+        .from("conversations")
+        .select("*")
+        .eq("id", conversationId)
+        .eq("user_id", user.id)
+        .single()
+    );
 
     // Get messages
-    const { data: messagesData, error: msgError } = await db
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", id)
-      .order("sent_at", { ascending: true });
-
-    const messages = messagesData as Message[] | null;
-
-    if (msgError) {
-      return NextResponse.json({ error: msgError.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      ...conversation,
-      messages: messages || [],
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch conversation" },
-      { status: 500 }
+    const messages = yield* query<Message[]>((client) =>
+      client
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("sent_at", { ascending: true })
     );
+
+    return {
+      ...conversation,
+      messages: messages ?? [],
+    };
+  });
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+  const program = getConversationProgram(id).pipe(Effect.provide(SupabaseServiceLive));
+
+  const result = await Effect.runPromise(program).catch((error) => {
+    if (error instanceof UnauthorizedError) {
+      return { _error: true, message: error.message, status: 401 };
+    }
+    if (error instanceof NotFoundError) {
+      return { _error: true, message: "Conversation not found", status: 404 };
+    }
+    if (error instanceof DatabaseError) {
+      return { _error: true, message: error.message, status: 500 };
+    }
+    return { _error: true, message: "Failed to fetch conversation", status: 500 };
+  });
+
+  if ("_error" in result) {
+    return NextResponse.json({ error: result.message }, { status: result.status });
   }
+
+  return NextResponse.json(result);
 }

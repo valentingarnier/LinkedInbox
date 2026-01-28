@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, fetchAllRows } from "@/lib/supabase/client";
 import type { Conversation, Message } from "@/lib/supabase/types";
 import type { LinkedInMessage, MessagesData, Conversation as LocalConversation } from "@/types/linkedin";
 
 interface UseConversationsOptions {
   userId: string;
   initialConversations: Conversation[];
+  onImportProgress?: (progress: number, total: number) => void;
 }
 
-export function useConversations({ userId, initialConversations }: UseConversationsOptions) {
+export function useConversations({ userId, initialConversations, onImportProgress }: UseConversationsOptions) {
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [localMessagesData, setLocalMessagesData] = useState<MessagesData | null>(null);
   const [selectedMessages, setSelectedMessages] = useState<Map<string, LinkedInMessage[]>>(new Map());
@@ -55,15 +56,14 @@ export function useConversations({ userId, initialConversations }: UseConversati
     if (selectedMessages.has(conversationId)) return;
 
     const supabase = createClient();
-    const db = supabase as any;
-    
-    const { data: messagesData } = await db
+
+    const { data } = await supabase
       .from("messages")
       .select("*")
       .eq("conversation_id", conversationId)
       .order("sent_at", { ascending: true });
 
-    const messages = messagesData as Message[] | null;
+    const messages = data as Message[] | null;
 
     if (messages) {
       const localMessages: LinkedInMessage[] = messages.map((msg) => ({
@@ -85,73 +85,124 @@ export function useConversations({ userId, initialConversations }: UseConversati
   const refreshConversations = useCallback(async () => {
     setLocalMessagesData(null);
     const supabase = createClient();
-    const db = supabase as any;
 
-    const { data: updatedConvosData } = await db
-      .from("conversations")
-      .select("*")
-      .eq("user_id", userId)
-      .order("last_message_date", { ascending: false });
+    // Fetch ALL conversations using pagination helper
+    const allConversations = await fetchAllRows<Conversation>(supabase, "conversations", {
+      eq: { user_id: userId },
+      order: { column: "last_message_date", ascending: false },
+    });
 
-    const updatedConvos = updatedConvosData as Conversation[] | null;
-
-    if (updatedConvos) {
-      setConversations(updatedConvos);
-    }
+    setConversations(allConversations);
   }, [userId]);
 
   const importConversations = useCallback(async (data: MessagesData) => {
     setLocalMessagesData(data);
 
     const supabase = createClient();
-    const db = supabase as any;
 
-    for (const conv of data.conversations) {
-      const { data: savedConvData, error: convError } = await db
-        .from("conversations")
-        .upsert(
-          {
-            user_id: userId,
-            linkedin_conversation_id: conv.id,
-            title: conv.title,
-            participants: conv.participants,
-            last_message_date: conv.lastMessageDate.toISOString(),
-            message_count: conv.messageCount,
-            analysis_status: "pending",
-          },
-          { onConflict: "user_id,linkedin_conversation_id" }
-        )
-        .select()
-        .single();
+    // Fetch existing conversation IDs for this user
+    const existingConvs = await fetchAllRows<{ linkedin_conversation_id: string }>(
+      supabase,
+      "conversations",
+      { select: "linkedin_conversation_id", eq: { user_id: userId } }
+    );
 
-      const savedConv = savedConvData as Conversation | null;
+    const existingConvIds = new Set(existingConvs.map((c) => c.linkedin_conversation_id));
 
-      if (convError || !savedConv) continue;
+    // Filter to only new conversations
+    const newConversations = data.conversations.filter(
+      (conv) => !existingConvIds.has(conv.id)
+    );
 
-      await db
-        .from("messages")
-        .delete()
-        .eq("conversation_id", savedConv.id);
+    if (newConversations.length === 0) {
+      onImportProgress?.(data.conversations.length, data.conversations.length);
+      await refreshConversations();
+      return;
+    }
 
-      const messagesToInsert = conv.messages.map((msg) => ({
-        conversation_id: savedConv.id,
+    // Batch size for parallel processing
+    const BATCH_SIZE = 50;
+    const totalNew = newConversations.length;
+
+    // Process in batches
+    for (let i = 0; i < newConversations.length; i += BATCH_SIZE) {
+      // Report progress
+      onImportProgress?.(Math.min(i + BATCH_SIZE, totalNew), totalNew);
+      const batch = newConversations.slice(i, i + BATCH_SIZE);
+
+      // Prepare conversation records for batch insert
+      const conversationRecords = batch.map((conv) => ({
+        user_id: userId,
         linkedin_conversation_id: conv.id,
-        sender: msg.from,
-        sender_profile_url: msg.senderProfileUrl || null,
-        recipient: msg.to || null,
-        content: msg.content,
-        subject: msg.subject || null,
-        sent_at: msg.date.toISOString(),
-        folder: msg.folder,
+        title: conv.title,
+        participants: conv.participants,
+        last_message_date: conv.lastMessageDate.toISOString(),
+        message_count: conv.messageCount,
+        analysis_status: "pending",
       }));
 
-      if (messagesToInsert.length > 0) {
-        await db.from("messages").insert(messagesToInsert);
+      // Batch insert conversations (no upsert needed since we filtered)
+      // Type assertion needed due to Supabase SSR client generic limitations
+      const { data: savedConvsData, error: convError } = await (supabase.from("conversations") as any)
+        .insert(conversationRecords)
+        .select("id, linkedin_conversation_id");
+
+      if (convError || !savedConvsData) {
+        console.error("Failed to insert conversations batch:", convError);
+        continue;
+      }
+
+      const savedConvs = savedConvsData as Array<{ id: string; linkedin_conversation_id: string }>;
+
+      // Create a map for quick lookup
+      const convIdMap = new Map(savedConvs.map((c) => [c.linkedin_conversation_id, c.id]));
+
+      // Prepare all messages for batch insert
+      const allMessages: Array<{
+        conversation_id: string;
+        linkedin_conversation_id: string;
+        sender: string;
+        sender_profile_url: string | null;
+        recipient: string | null;
+        content: string;
+        subject: string | null;
+        sent_at: string;
+        folder: string;
+      }> = [];
+
+      for (const conv of batch) {
+        const dbConvId = convIdMap.get(conv.id);
+        if (!dbConvId) continue;
+
+        for (const msg of conv.messages) {
+          allMessages.push({
+            conversation_id: dbConvId,
+            linkedin_conversation_id: conv.id,
+            sender: msg.from,
+            sender_profile_url: msg.senderProfileUrl || null,
+            recipient: msg.to || null,
+            content: msg.content,
+            subject: msg.subject || null,
+            sent_at: msg.date.toISOString(),
+            folder: msg.folder,
+          });
+        }
+      }
+
+      // Insert messages in chunks (Supabase has limits on request size)
+      const MESSAGE_CHUNK_SIZE = 500;
+      for (let j = 0; j < allMessages.length; j += MESSAGE_CHUNK_SIZE) {
+        const messageChunk = allMessages.slice(j, j + MESSAGE_CHUNK_SIZE);
+        // Type assertion needed due to Supabase SSR client generic limitations
+        const { error: msgError } = await (supabase.from("messages") as any).insert(messageChunk);
+        if (msgError) {
+          console.error("Failed to insert messages chunk:", msgError);
+        }
       }
     }
 
     await refreshConversations();
-  }, [userId, refreshConversations]);
+  }, [userId, onImportProgress, refreshConversations]);
 
   return {
     conversations,

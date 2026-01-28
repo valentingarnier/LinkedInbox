@@ -17,15 +17,29 @@ export function Header({ children, variant = "full" }: HeaderProps) {
   );
 }
 
-export function Logo() {
+export function Logo({ size = "default" }: { size?: "default" | "large" }) {
+  const iconSize = size === "large" ? 28 : 22;
+  const textSize = size === "large" ? "text-xl" : "text-base";
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center">
-        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-        </svg>
-      </div>
-      <span className="font-semibold text-zinc-900">LinkedInbox</span>
+    <div className="flex items-center gap-2">
+      {/* Minimalist inbox icon */}
+      <svg 
+        width={iconSize} 
+        height={iconSize} 
+        viewBox="0 0 24 24" 
+        fill="none"
+        className="flex-shrink-0"
+      >
+        <rect x="2" y="5" width="20" height="14" rx="2" stroke="#6039ed" strokeWidth="1.5" fill="none"/>
+        <path d="M2 8.5L12 14L22 8.5" stroke="#6039ed" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="19" cy="8" r="2" fill="#6039ed"/>
+      </svg>
+      {/* Wordmark */}
+      <span className={`font-semibold tracking-tight ${textSize}`}>
+        <span className="text-zinc-900">Linked</span>
+        <span className="text-[#6039ed]">Inbox</span>
+      </span>
     </div>
   );
 }

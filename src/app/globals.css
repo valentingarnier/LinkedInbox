@@ -3,16 +3,22 @@
 :root {
   --background: #ffffff;
   --foreground: #18181b;
+  /* Brand colors */
+  --brand-purple: #6039ed;
+  --brand-purple-dark: #4c2bc4;
+  --brand-purple-light: #7b5cf5;
+  --brand-black: #0a0a0a;
+  /* Purple scale */
   --purple-50: #faf5ff;
   --purple-100: #f3e8ff;
   --purple-200: #e9d5ff;
   --purple-300: #d8b4fe;
   --purple-400: #c084fc;
   --purple-500: #a855f7;
-  --purple-600: #9333ea;
-  --purple-700: #7c3aed;
-  --purple-800: #6b21a8;
-  --purple-900: #581c87;
+  --purple-600: #6039ed;
+  --purple-700: #4c2bc4;
+  --purple-800: #3d2299;
+  --purple-900: #2e1a73;
   --purple-950: #1e0a3c;
 }
 

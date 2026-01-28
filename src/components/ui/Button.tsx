@@ -3,20 +3,21 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "outline";
   size?: "sm" | "md" | "lg";
 }
 
 const variantClasses = {
-  primary: "bg-blue-600 hover:bg-blue-700 text-white",
-  secondary: "bg-zinc-100 hover:bg-zinc-200 text-zinc-900",
-  ghost: "text-zinc-500 hover:text-zinc-700",
+  primary: "bg-[#6039ed] hover:bg-[#4c2bc4] text-white shadow-sm hover:shadow-md",
+  secondary: "bg-zinc-900 hover:bg-zinc-800 text-white",
+  ghost: "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50",
+  outline: "border-2 border-[#6039ed] text-[#6039ed] hover:bg-[#6039ed] hover:text-white",
 };
 
 const sizeClasses = {
-  sm: "px-2 py-1 text-xs",
-  md: "px-3 py-1.5 text-sm",
-  lg: "px-4 py-2 text-base",
+  sm: "px-3 py-1.5 text-xs",
+  md: "px-4 py-2 text-sm",
+  lg: "px-5 py-2.5 text-base",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -27,7 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`
           ${variantClasses[variant]}
           ${sizeClasses[size]}
-          rounded-lg transition-colors
+          rounded-lg font-medium transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
           ${className}
         `}

@@ -14,6 +14,61 @@ import { Header, Logo } from "@/components/layout";
 import type { AnalyticsSummary as AnalyticsSummaryType } from "@/lib/supabase/types";
 import type { Conversation } from "@/lib/supabase/types";
 
+// Compute prospect status counts from conversations
+function computeProspectStatusCounts(conversations: Conversation[]) {
+  const counts = {
+    interested: 0,
+    meeting_scheduled: 0,
+    engaged: 0,
+    no_response: 0,
+    ghosted: 0,
+    not_interested: 0,
+    wrong_person: 0,
+    closed: 0,
+  };
+
+  for (const conv of conversations) {
+    if (conv.is_cold_outreach && conv.prospect_status) {
+      const status = conv.prospect_status as keyof typeof counts;
+      if (status in counts) {
+        counts[status]++;
+      }
+    }
+  }
+
+  return counts;
+}
+
+// Compute responses by day of week (all time) to find best reach time
+function computeResponsesByDayOfWeek(conversations: Conversation[]) {
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  
+  // Count responses by day of week
+  const responseCounts: Record<string, number> = {
+    Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0
+  };
+
+  for (const conv of conversations) {
+    if (!conv.is_cold_outreach) continue;
+    if (conv.total_messages_received <= 0) continue;
+    
+    // Use last_message_date to determine when responses came
+    const lastMsgDate = new Date(conv.last_message_date);
+    const dayName = days[lastMsgDate.getDay()];
+    responseCounts[dayName]++;
+  }
+
+  const totalResponses = Object.values(responseCounts).reduce((sum, c) => sum + c, 0);
+  
+  // Return in order from Monday to Sunday
+  const orderedDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return orderedDays.map(day => ({
+    day,
+    responses: responseCounts[day],
+    percentage: totalResponses > 0 ? (responseCounts[day] / totalResponses) * 100 : 0,
+  }));
+}
+
 interface DashboardUser {
   id: string;
   email: string;
@@ -45,8 +100,12 @@ export function DashboardContent({
   const [analytics, setAnalytics] = useState<AnalyticsSummaryType | null>(initialAnalytics);
   const [showImport, setShowImport] = useState(initialConversations.length === 0);
 
+  // Import progress state
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
+
   // Custom hooks
   const {
+    conversations,
     displayConversations,
     selectedConversation,
     selectConversation,
@@ -54,7 +113,11 @@ export function DashboardContent({
     importConversations,
     setConversations,
     clearLocalData,
-  } = useConversations({ userId: user.id, initialConversations });
+  } = useConversations({
+    userId: user.id,
+    initialConversations,
+    onImportProgress: (current, total) => setImportProgress({ current, total }),
+  });
 
   const refreshAnalytics = useCallback(async () => {
     const supabase = createClient();
@@ -117,7 +180,9 @@ export function DashboardContent({
   const handleDataLoaded = async (data: Parameters<typeof importConversations>[0]) => {
     // Clear old analytics when importing new data
     setAnalytics(null);
+    setImportProgress({ current: 0, total: data.conversations.length });
     await importConversations(data);
+    setImportProgress(null);
     setShowImport(false);
     await fetchStatus();
   };
@@ -127,6 +192,28 @@ export function DashboardContent({
     await refreshConversations();
     await refreshAnalytics();
     await fetchStatus();
+  };
+
+  const handleStopAnalysis = async () => {
+    try {
+      const response = await fetch("/api/analyze/stop", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(`Failed to stop: ${data.error || "Unknown error"}`);
+        return;
+      }
+
+      // Update UI state
+      setIsAnalyzing(false);
+      await fetchStatus();
+      await refreshConversations();
+    } catch (err) {
+      alert(`Error: ${String(err)}`);
+    }
   };
 
   const handleReanalyze = async () => {
@@ -204,7 +291,27 @@ export function DashboardContent({
 
             <FileUpload onDataLoaded={handleDataLoaded} />
 
-            {displayConversations.length > 0 && (
+            {importProgress && (
+              <div className="mt-6 p-4 bg-purple-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-2">
+                  <Spinner size="sm" />
+                  <span className="text-sm font-medium text-purple-700">
+                    Importing conversations...
+                  </span>
+                </div>
+                <div className="w-full bg-purple-200 rounded-full h-2">
+                  <div
+                    className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-purple-600 mt-2">
+                  {importProgress.current} / {importProgress.total} conversations
+                </p>
+              </div>
+            )}
+
+            {displayConversations.length > 0 && !importProgress && (
               <button
                 onClick={() => setShowImport(false)}
                 className="mt-6 text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
@@ -225,70 +332,88 @@ export function DashboardContent({
     <div className="h-screen flex flex-col bg-white">
       <Header>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Logo />
-            <div className="ml-2">
-              <p className="text-xs text-zinc-400">
-                {totalMessages.toLocaleString()} messages · {displayConversations.length} conversations
-              </p>
-            </div>
+            <div className="h-6 w-px bg-zinc-200" />
+            <p className="text-sm text-zinc-600">
+              <span className="font-semibold text-zinc-900">{displayConversations.length}</span> conversations
+              <span className="text-zinc-300 mx-2">·</span>
+              <span className="text-zinc-400">{totalMessages.toLocaleString()} messages</span>
+            </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            {analysisError && (
-              <span className="text-xs text-red-500 max-w-xs truncate" title={analysisError}>
-                Error: {analysisError}
-              </span>
-            )}
-
-            {analysisStatus && analysisStatus.pending > 0 && !isAnalyzing && (
-              <Button onClick={triggerAnalysis} className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Analyze {analysisStatus.pending} conversations
-              </Button>
-            )}
-
-            {isAnalyzing && (
-              <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            {/* Analysis Controls */}
+            {isAnalyzing ? (
+              // Active analysis: show progress + stop button
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#6039ed]/10 border border-[#6039ed]/20 rounded-lg">
                 <Spinner size="sm" />
                 <div className="text-sm">
-                  <span className="text-purple-600 font-medium">
+                  <span className="text-[#6039ed] font-semibold">
                     {analysisStatus?.stageLabel || "Analyzing..."}
                   </span>
                   {analysisStatus && analysisStatus.progress !== null && analysisStatus.progressTotal !== null && (
-                    <span className="text-zinc-400 ml-2">
+                    <span className="text-[#6039ed]/60 ml-2 font-medium">
                       ({analysisStatus.progress}/{analysisStatus.progressTotal})
                     </span>
                   )}
                 </div>
+                <button
+                  onClick={handleStopAnalysis}
+                  className="ml-2 flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 transition-all px-2 py-1 rounded hover:bg-red-50 border border-red-200"
+                  title="Stop analysis (can resume later)"
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="6" width="12" height="12" rx="1" />
+                  </svg>
+                  Stop
+                </button>
+              </div>
+            ) : (
+              // Not analyzing: show action buttons
+              <div className="flex items-center gap-2">
+                {/* Analyze pending button */}
+                {analysisStatus && analysisStatus.pending > 0 && (
+                  <button
+                    onClick={() => {
+                      console.log("[Dashboard] Analyze button clicked!");
+                      triggerAnalysis();
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#6039ed] hover:bg-[#4c2bc4] text-white text-sm font-semibold rounded-lg transition-all shadow-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Analyze {analysisStatus.pending.toLocaleString()}
+                  </button>
+                )}
+                
+                {/* Re-analyze button - always visible when there are conversations */}
+                {analysisStatus && analysisStatus.total > 0 && (
+                  <button
+                    onClick={handleReanalyze}
+                    className="flex items-center gap-2 px-3 py-1.5 border border-zinc-200 text-zinc-600 text-sm font-medium rounded-lg hover:bg-zinc-50 hover:border-zinc-300 transition-all"
+                    title="Reset and re-analyze all conversations"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Reset
+                  </button>
+                )}
               </div>
             )}
 
-            {!isAnalyzing && analysisStatus && analysisStatus.completed > 0 && (
-              <>
-                <button
-                  onClick={handleRefresh}
-                  className="text-zinc-500 hover:text-zinc-700 transition-colors p-1"
-                  title="Refresh data"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleReanalyze}
-                  className="text-xs text-zinc-500 hover:text-orange-600 transition-colors px-2 py-1 rounded hover:bg-orange-50"
-                  title="Re-analyze all conversations (reset and run again)"
-                >
-                  Re-analyze
-                </button>
-              </>
+            {analysisError && (
+              <span className="text-xs text-red-500 max-w-xs truncate px-2 py-1 bg-red-50 rounded" title={analysisError}>
+                ⚠ {analysisError}
+              </span>
             )}
 
+            <div className="h-6 w-px bg-zinc-200" />
+
             <Button variant="ghost" onClick={() => setShowImport(true)}>
-              Import new file
+              Import
             </Button>
 
             <Avatar src={user.avatarUrl} name={fullName} />
@@ -301,7 +426,14 @@ export function DashboardContent({
       </Header>
 
       {analytics && displayConversations.length > 0 && (!analysisStatus || analysisStatus.pending === 0) && (
-        <AnalyticsSummary analytics={analytics} isLoading={isAnalyzing} />
+        <AnalyticsSummary 
+          analytics={analytics} 
+          isLoading={isAnalyzing}
+          totalConversations={conversations.length}
+          coldOutreachCount={conversations.filter(c => c.is_cold_outreach === true).length}
+          prospectStatusCounts={computeProspectStatusCounts(conversations)}
+          responsesByDayOfWeek={computeResponsesByDayOfWeek(conversations)}
+        />
       )}
 
       <div className="flex-1 flex overflow-hidden">

@@ -2,6 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./types";
 
+// Re-export pagination helper for server-side use
+export { fetchAllRows } from "./pagination";
+
 export async function createClient() {
   const cookieStore = await cookies();
 

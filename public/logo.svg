@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <!-- Minimalist inbox icon -->
+  <rect x="2" y="5" width="20" height="14" rx="2" stroke="#6039ed" stroke-width="1.5" fill="none"/>
+  <path d="M2 8.5L12 14L22 8.5" stroke="#6039ed" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Small "in" indicator dot -->
+  <circle cx="19" cy="8" r="2" fill="#6039ed"/>
+</svg>

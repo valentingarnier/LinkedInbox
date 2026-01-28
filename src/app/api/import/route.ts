@@ -1,85 +1,103 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { Effect } from "effect";
+import {
+  SupabaseServiceLive,
+  getAuthenticatedUser,
+  query,
+  mutate,
+} from "@/server/effect";
+import { DatabaseError, UnauthorizedError } from "@/server/effect/errors";
 import type { Import } from "@/lib/supabase/types";
 
 /**
  * POST /api/import
  * Creates an import record (tracking purposes)
  */
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const db = supabase as any;
+const createImportProgram = (
+  fileName: string,
+  totalMessages: number,
+  totalConversations: number
+) =>
+  Effect.gen(function* () {
+    const user = yield* getAuthenticatedUser;
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { fileName, totalMessages, totalConversations } = body;
-
-    const { data: importRecordData, error } = await db
-      .from("imports")
-      .insert({
-        user_id: user.id,
-        file_name: fileName,
-        total_messages: totalMessages,
-        total_conversations: totalConversations,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    const importRecord = importRecordData as Import | null;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(importRecord);
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to create import record" },
-      { status: 500 }
+    const importRecord = yield* mutate<Import>((client) =>
+      client
+        .from("imports")
+        .insert({
+          user_id: user.id,
+          file_name: fileName,
+          total_messages: totalMessages,
+          total_conversations: totalConversations,
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
     );
-  }
-}
+
+    return importRecord;
+  });
 
 /**
  * GET /api/import
  * Returns import history for the user
  */
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const db = supabase as any;
+const getImportsProgram = Effect.gen(function* () {
+  const user = yield* getAuthenticatedUser;
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: importsData, error } = await db
+  const imports = yield* query<Import[]>((client) =>
+    client
       .from("imports")
       .select("*")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+  );
 
-    const imports = importsData as Import[] | null;
+  return imports ?? [];
+});
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const { fileName, totalMessages, totalConversations } = body;
+
+  const program = createImportProgram(fileName, totalMessages, totalConversations).pipe(
+    Effect.provide(SupabaseServiceLive)
+  );
+
+  const result = await Effect.runPromise(program).catch((error) => {
+    if (error instanceof UnauthorizedError) {
+      return { _error: true, message: error.message, status: 401 };
     }
+    if (error instanceof DatabaseError) {
+      return { _error: true, message: error.message, status: 500 };
+    }
+    return { _error: true, message: "Failed to create import record", status: 500 };
+  });
 
-    return NextResponse.json(imports);
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch imports" },
-      { status: 500 }
-    );
+  if ("_error" in result) {
+    return NextResponse.json({ error: result.message }, { status: result.status });
   }
+
+  return NextResponse.json(result);
+}
+
+export async function GET(request: NextRequest) {
+  const program = getImportsProgram.pipe(Effect.provide(SupabaseServiceLive));
+
+  const result = await Effect.runPromise(program).catch((error) => {
+    if (error instanceof UnauthorizedError) {
+      return { _error: true, message: error.message, status: 401 };
+    }
+    if (error instanceof DatabaseError) {
+      return { _error: true, message: error.message, status: 500 };
+    }
+    return { _error: true, message: "Failed to fetch imports", status: 500 };
+  });
+
+  if ("_error" in result) {
+    return NextResponse.json({ error: result.message }, { status: result.status });
+  }
+
+  return NextResponse.json(result);
 }

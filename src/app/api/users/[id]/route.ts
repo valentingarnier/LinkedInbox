@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { Effect, Data } from "effect";
+import {
+  SupabaseServiceLive,
+  getAuthenticatedUser,
+  query,
+  mutate,
+} from "@/server/effect";
+import { DatabaseError, UnauthorizedError } from "@/server/effect/errors";
 import type { Profile } from "@/lib/supabase/types";
+
+// Custom error for forbidden access
+class ForbiddenError extends Data.TaggedError("ForbiddenError")<{
+  readonly message: string;
+}> {}
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -10,89 +22,99 @@ interface RouteParams {
  * GET /api/users/[id]
  * Returns a specific user's profile (only own profile allowed)
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const db = supabase as any;
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+const getUserByIdProgram = (userId: string) =>
+  Effect.gen(function* () {
+    const user = yield* getAuthenticatedUser;
 
     // Only allow fetching own profile
-    if (user.id !== id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (user.id !== userId) {
+      return yield* Effect.fail(new ForbiddenError({ message: "Forbidden" }));
     }
 
-    const { data: profileData, error } = await db
-      .from("profiles")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const profile = yield* query<Profile | null>((client) =>
+      client.from("profiles").select("*").eq("id", userId).single()
+    );
 
-    const profile = profileData as Profile | null;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
+    return {
       id: user.id,
       email: user.email,
       ...profile,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch user" },
-      { status: 500 }
-    );
-  }
-}
+    };
+  });
 
 /**
  * PATCH /api/users/[id]
  * Updates a user's profile
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = await params;
-    const supabase = await createClient();
-    const db = supabase as any;
+const updateUserProgram = (userId: string, firstName: string, lastName: string) =>
+  Effect.gen(function* () {
+    const user = yield* getAuthenticatedUser;
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (user.id !== userId) {
+      return yield* Effect.fail(new ForbiddenError({ message: "Forbidden" }));
     }
 
-    if (user.id !== id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { first_name, last_name } = body;
-
-    const { data: profileData, error } = await db
-      .from("profiles")
-      .update({ first_name, last_name })
-      .eq("id", id)
-      .select()
-      .single();
-
-    const profile = profileData as Profile | null;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(profile);
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to update user" },
-      { status: 500 }
+    const profile = yield* mutate<Profile>((client) =>
+      client
+        .from("profiles")
+        .update({ first_name: firstName, last_name: lastName })
+        .eq("id", userId)
+        .select()
+        .single()
     );
+
+    return profile;
+  });
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+  const program = getUserByIdProgram(id).pipe(Effect.provide(SupabaseServiceLive));
+
+  const result = await Effect.runPromise(program).catch((error) => {
+    if (error instanceof UnauthorizedError) {
+      return { _error: true, message: error.message, status: 401 };
+    }
+    if (error instanceof ForbiddenError) {
+      return { _error: true, message: error.message, status: 403 };
+    }
+    if (error instanceof DatabaseError) {
+      return { _error: true, message: error.message, status: 500 };
+    }
+    return { _error: true, message: "Failed to fetch user", status: 500 };
+  });
+
+  if ("_error" in result) {
+    return NextResponse.json({ error: result.message }, { status: result.status });
   }
+
+  return NextResponse.json(result);
+}
+
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+  const body = await request.json();
+  const { first_name, last_name } = body;
+
+  const program = updateUserProgram(id, first_name, last_name).pipe(
+    Effect.provide(SupabaseServiceLive)
+  );
+
+  const result = await Effect.runPromise(program).catch((error) => {
+    if (error instanceof UnauthorizedError) {
+      return { _error: true, message: error.message, status: 401 };
+    }
+    if (error instanceof ForbiddenError) {
+      return { _error: true, message: error.message, status: 403 };
+    }
+    if (error instanceof DatabaseError) {
+      return { _error: true, message: error.message, status: 500 };
+    }
+    return { _error: true, message: "Failed to update user", status: 500 };
+  });
+
+  if ("_error" in result) {
+    return NextResponse.json({ error: result.message }, { status: result.status });
+  }
+
+  return NextResponse.json(result);
 }

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-function LoginForm() {
+function SignupForm() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -38,32 +38,32 @@ function LoginForm() {
       <button
         onClick={() => handleOAuthLogin("google")}
         disabled={isLoading !== null}
-        className="group w-full flex items-center justify-center gap-3 px-5 py-4 bg-white/[0.03] border border-white/10 rounded-xl hover:bg-white/[0.06] hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="group w-full flex items-center justify-center gap-3 px-5 py-4 bg-[#6039ed] hover:bg-[#4c2bc4] border border-[#6039ed] rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[#6039ed]/25"
       >
         {isLoading === "google" ? (
-          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         ) : (
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
-              fill="#4285F4"
+              fill="white"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
             />
             <path
-              fill="#34A853"
+              fill="white"
               d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
             />
             <path
-              fill="#FBBC05"
+              fill="white"
               d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
             />
             <path
-              fill="#EA4335"
+              fill="white"
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
         )}
-        <span className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
-          Continue with Google
+        <span className="text-sm font-semibold text-white">
+          Get Started with Google
         </span>
       </button>
 
@@ -112,7 +112,7 @@ function Logo() {
   );
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] relative overflow-hidden">
       {/* Background effects */}
@@ -150,68 +150,71 @@ export default function LoginPage() {
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#6039ed]/10 border border-[#6039ed]/20 mb-4">
                   <svg className="w-6 h-6 text-[#6039ed]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
                 <h1 className="text-2xl font-bold text-white mb-2">
-                  Welcome back
+                  Start analyzing in 2 minutes
                 </h1>
                 <p className="text-zinc-500">
-                  Sign in to access your outreach insights
+                  Free forever for up to 100 conversations
                 </p>
               </div>
 
-              {/* Login form */}
+              {/* Signup form */}
               <Suspense fallback={
                 <div className="space-y-3">
                   <div className="w-full h-14 bg-white/5 rounded-xl animate-pulse" />
                   <div className="w-full h-14 bg-white/5 rounded-xl animate-pulse" />
                 </div>
               }>
-                <LoginForm />
+                <SignupForm />
               </Suspense>
 
-              {/* Divider */}
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/5" />
+              {/* Stats */}
+              <div className="mt-8 grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-white">2 min</div>
+                  <div className="text-xs text-zinc-500">Setup time</div>
                 </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-[#0a0a0a] px-4 text-xs text-zinc-600">or</span>
+                <div className="text-center border-x border-white/5">
+                  <div className="text-xl font-bold text-white">100%</div>
+                  <div className="text-xs text-zinc-500">Private</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-white">Free</div>
+                  <div className="text-xs text-zinc-500">To start</div>
                 </div>
               </div>
 
-              {/* Features preview */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-zinc-400">Import your LinkedIn messages in seconds</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-zinc-400">AI analyzes every conversation</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-lg bg-[#6039ed]/10 flex items-center justify-center flex-shrink-0">
+              {/* What you get */}
+              <div className="mt-8 p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">What you&apos;ll get</p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#6039ed]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
+                    <span className="text-zinc-400">Your Market Pull score</span>
                   </div>
-                  <span className="text-zinc-400">Get your Market Pull score</span>
+                  <div className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#6039ed]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-zinc-400">AI prospect classification</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#6039ed]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-zinc-400">Response rate & engagement</span>
+                  </div>
                 </div>
               </div>
 
               {/* Terms */}
-              <p className="mt-8 text-xs text-zinc-600 text-center leading-relaxed">
-                By continuing, you agree to our{" "}
+              <p className="mt-6 text-xs text-zinc-600 text-center leading-relaxed">
+                By signing up, you agree to our{" "}
                 <Link href="/terms" className="text-zinc-400 hover:text-white transition-colors">
                   Terms
                 </Link>{" "}
@@ -225,9 +228,9 @@ export default function LoginPage() {
 
           {/* Bottom CTA */}
           <p className="mt-6 text-center text-sm text-zinc-600">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-[#6039ed] hover:text-[#7c5cf5] transition-colors font-medium">
-              Sign up for free
+            Already have an account?{" "}
+            <Link href="/login" className="text-[#6039ed] hover:text-[#7c5cf5] transition-colors font-medium">
+              Sign in
             </Link>
           </p>
         </div>

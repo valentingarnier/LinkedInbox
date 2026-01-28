@@ -86,6 +86,8 @@ export interface Database {
           outreach_score_originality: number | null;
           outreach_feedback: string | null;
           outreach_suggestions: string[] | null;
+          // Template clustering
+          template_cluster_id: string | null;
         };
         Insert: {
           id?: string;
@@ -120,6 +122,7 @@ export interface Database {
           outreach_score_originality?: number | null;
           outreach_feedback?: string | null;
           outreach_suggestions?: string[] | null;
+          template_cluster_id?: string | null;
         };
         Update: {
           id?: string;
@@ -154,6 +157,54 @@ export interface Database {
           outreach_score_originality?: number | null;
           outreach_feedback?: string | null;
           outreach_suggestions?: string[] | null;
+          template_cluster_id?: string | null;
+        };
+      };
+      message_templates: {
+        Row: {
+          id: string;
+          user_id: string;
+          cluster_id: string;
+          label: string;
+          description: string | null;
+          pattern_example: string | null;
+          conversation_count: number;
+          response_rate: number | null;
+          interest_rate: number | null;
+          ghost_rate: number | null;
+          avg_engagement: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          cluster_id: string;
+          label: string;
+          description?: string | null;
+          pattern_example?: string | null;
+          conversation_count?: number;
+          response_rate?: number | null;
+          interest_rate?: number | null;
+          ghost_rate?: number | null;
+          avg_engagement?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          cluster_id?: string;
+          label?: string;
+          description?: string | null;
+          pattern_example?: string | null;
+          conversation_count?: number;
+          response_rate?: number | null;
+          interest_rate?: number | null;
+          ghost_rate?: number | null;
+          avg_engagement?: number | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       messages: {
@@ -304,3 +355,4 @@ export type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 export type Message = Database["public"]["Tables"]["messages"]["Row"];
 export type Import = Database["public"]["Tables"]["imports"]["Row"];
 export type AnalyticsSummary = Database["public"]["Tables"]["analytics_summary"]["Row"];
+export type MessageTemplate = Database["public"]["Tables"]["message_templates"]["Row"];
