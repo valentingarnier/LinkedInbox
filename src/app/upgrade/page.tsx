@@ -104,7 +104,7 @@ export default function UpgradePage() {
             Unlock Full Insights
           </h1>
           <p className="text-zinc-400 mb-8 leading-relaxed">
-            Get lifetime access to all premium features. Uncover the patterns that make your cold outreach successful.
+            Get lifetime access to all premium features. Uncover the patterns that make your cold outreach successful. Simply send us your email.
           </p>
 
           {/* Price card */}

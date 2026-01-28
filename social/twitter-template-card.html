@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedInbox - Template Performance Card</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0a0a0a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    
+    .card {
+      width: 1200px;
+      height: 675px;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      border-radius: 24px;
+      padding: 60px;
+      display: flex;
+      gap: 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(96, 57, 237, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    .card::after {
+      content: '';
+      position: absolute;
+      bottom: -100px;
+      left: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(96, 57, 237, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    .left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 1;
+    }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(96, 57, 237, 0.15);
+      border: 1px solid rgba(96, 57, 237, 0.3);
+      padding: 8px 16px;
+      border-radius: 100px;
+      width: fit-content;
+      margin-bottom: 24px;
+    }
+    
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      background: #6039ed;
+      border-radius: 50%;
+    }
+    
+    .badge-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: #6039ed;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      color: white;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    
+    h1 span {
+      background: linear-gradient(135deg, #6039ed 0%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .subtitle {
+      font-size: 20px;
+      color: #71717a;
+      line-height: 1.5;
+      margin-bottom: 32px;
+    }
+    
+    .problem-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .problem-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      color: #a1a1aa;
+    }
+    
+    .problem-item svg {
+      width: 20px;
+      height: 20px;
+      color: #ef4444;
+      flex-shrink: 0;
+    }
+    
+    .right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 1;
+    }
+    
+    .templates-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 28px;
+    }
+    
+    .templates-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    
+    .templates-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .templates-subtitle {
+      font-size: 13px;
+      color: #71717a;
+    }
+    
+    .template-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    
+    .template-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    .template-rank {
+      width: 32px;
+      height: 32px;
+      background: rgba(96, 57, 237, 0.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #6039ed;
+    }
+    
+    .template-rank.gold {
+      background: linear-gradient(135deg, rgba(250, 204, 21, 0.2) 0%, rgba(234, 179, 8, 0.1) 100%);
+      color: #facc15;
+    }
+    
+    .template-info {
+      flex: 1;
+    }
+    
+    .template-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 4px;
+    }
+    
+    .template-count {
+      font-size: 12px;
+      color: #71717a;
+    }
+    
+    .template-stats {
+      text-align: right;
+    }
+    
+    .template-rate {
+      font-size: 20px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+    
+    .template-rate.gold {
+      color: #facc15;
+    }
+    
+    .template-label {
+      font-size: 11px;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .logo {
+      position: absolute;
+      bottom: 40px;
+      left: 60px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #6039ed 0%, #4c2bc4 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo-icon svg {
+      width: 18px;
+      height: 18px;
+      color: white;
+    }
+    
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .url {
+      position: absolute;
+      bottom: 44px;
+      right: 60px;
+      font-size: 16px;
+      color: #6039ed;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="left">
+      <div class="badge">
+        <div class="badge-dot"></div>
+        <span class="badge-text">The Problem</span>
+      </div>
+      <h1>
+        You don't know which<br>
+        <span>templates work</span>
+      </h1>
+      <p class="subtitle">
+        You've sent hundreds of LinkedIn messages.<br>
+        But which opener style actually resonates?
+      </p>
+      <div class="problem-list">
+        <div class="problem-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          <span>"I'll try a compliment opener this time"</span>
+        </div>
+        <div class="problem-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          <span>"Maybe direct value prop works better?"</span>
+        </div>
+        <div class="problem-item">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          <span>"I have no idea what's actually working"</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="right">
+      <div class="templates-card">
+        <div class="templates-header">
+          <div>
+            <div class="templates-title">Template Performance</div>
+            <div class="templates-subtitle">Ranked by interest rate</div>
+          </div>
+        </div>
+        
+        <div class="template-row">
+          <div class="template-rank gold">1</div>
+          <div class="template-info">
+            <div class="template-name">Compliment + Specific Ask</div>
+            <div class="template-count">24 conversations</div>
+          </div>
+          <div class="template-stats">
+            <div class="template-rate gold">32%</div>
+            <div class="template-label">interest</div>
+          </div>
+        </div>
+        
+        <div class="template-row">
+          <div class="template-rank">2</div>
+          <div class="template-info">
+            <div class="template-name">Mutual Connection Intro</div>
+            <div class="template-count">18 conversations</div>
+          </div>
+          <div class="template-stats">
+            <div class="template-rate">28%</div>
+            <div class="template-label">interest</div>
+          </div>
+        </div>
+        
+        <div class="template-row">
+          <div class="template-rank">3</div>
+          <div class="template-info">
+            <div class="template-name">Direct Value Proposition</div>
+            <div class="template-count">45 conversations</div>
+          </div>
+          <div class="template-stats">
+            <div class="template-rate">21%</div>
+            <div class="template-label">interest</div>
+          </div>
+        </div>
+        
+        <div class="template-row">
+          <div class="template-rank">4</div>
+          <div class="template-info">
+            <div class="template-name">Generic Outreach</div>
+            <div class="template-count">67 conversations</div>
+          </div>
+          <div class="template-stats">
+            <div class="template-rate" style="color: #ef4444;">8%</div>
+            <div class="template-label">interest</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="logo">
+      <div class="logo-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <span class="logo-text">LinkedInbox</span>
+    </div>
+    
+    <div class="url">linkedinbox.co</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedInbox Logo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0a0a0a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 80px;
+    }
+    
+    .section-label {
+      font-size: 12px;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    /* Square icon only - for favicon/app icon */
+    .logo-icon-only {
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(135deg, #6039ed 0%, #4c2bc4 100%);
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 20px 50px rgba(96, 57, 237, 0.3),
+        0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .logo-icon-only svg {
+      width: 100px;
+      height: 100px;
+      color: white;
+    }
+    
+    /* Full logo with text */
+    .logo-full {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .logo-full .icon {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #6039ed 0%, #4c2bc4 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 10px 30px rgba(96, 57, 237, 0.25);
+    }
+    
+    .logo-full .icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+    }
+    
+    .logo-full .text {
+      font-size: 42px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -1px;
+    }
+    
+    /* Variations container */
+    .variations {
+      display: flex;
+      gap: 60px;
+      align-items: flex-start;
+    }
+    
+    .variation {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Small icon for Twitter profile */
+    .logo-small {
+      width: 400px;
+      height: 400px;
+      background: linear-gradient(135deg, #6039ed 0%, #4c2bc4 100%);
+      border-radius: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 40px 80px rgba(96, 57, 237, 0.4),
+        0 20px 40px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .logo-small::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+    }
+    
+    .logo-small svg {
+      width: 200px;
+      height: 200px;
+      color: white;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Banner style */
+    .banner {
+      width: 1500px;
+      height: 500px;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .banner::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(96, 57, 237, 0.2) 0%, transparent 70%);
+    }
+    
+    .banner::after {
+      content: '';
+      position: absolute;
+      bottom: -150px;
+      left: -150px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(96, 57, 237, 0.15) 0%, transparent 70%);
+    }
+    
+    .banner .icon {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #6039ed 0%, #4c2bc4 100%);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 50px rgba(96, 57, 237, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+    
+    .banner .icon svg {
+      width: 64px;
+      height: 64px;
+      color: white;
+    }
+    
+    .banner .text {
+      font-size: 72px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -2px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .banner .tagline {
+      position: absolute;
+      bottom: 40px;
+      font-size: 20px;
+      color: #71717a;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Profile Picture / App Icon (400x400) -->
+  <div class="variation">
+    <div class="section-label">Profile Picture / App Icon (400×400)</div>
+    <div class="logo-small">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>
+    </div>
+  </div>
+  
+  <!-- Horizontal logo -->
+  <div class="variation">
+    <div class="section-label">Horizontal Logo</div>
+    <div class="logo-full">
+      <div class="icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <span class="text">LinkedInbox</span>
+    </div>
+  </div>
+  
+  <!-- Twitter/X Banner (1500x500) -->
+  <div class="variation">
+    <div class="section-label">Twitter/X Banner (1500×500)</div>
+    <div class="banner">
+      <div class="icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <span class="text">LinkedInbox</span>
+      <span class="tagline">Cold outreach analytics that tell the truth</span>
+    </div>
+  </div>
+
+</body>
+</html>
