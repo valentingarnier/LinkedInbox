@@ -30,13 +30,13 @@ A) PROSPECT STATUS (based on [PROSPECT]'s behavior only):
 - no_response: [PROSPECT] never replied
 - engaged: Active back-and-forth ongoing
 - interested: [PROSPECT] shows positive interest in offer
-- meeting_scheduled: [PROSPECT] agreed to meeting/call
-- not_interested: [PROSPECT] explicitly declined
-- wrong_person: [PROSPECT] redirected to someone else
+- meeting_scheduled: [PROSPECT] agreed to meeting/call regarding the cold outreach strategy or what I am trying to sell
+- not_interested: [PROSPECT] explicitly declined or said wasnt interested
+- wrong_person: [PROSPECT] redirected to someone else or not working there anymore
 - ghosted: [PROSPECT] replied before, then stopped (I sent 2+ unanswered follow-ups)
 - closed: Conversation concluded naturally
 
-B) OUTREACH QUALITY (score 0-100, most score 40-60):
+B) OUTREACH QUALITY (score 0-100):
 - Personalization: Research shown?
 - Value Proposition: Clear benefit?
 - Call to Action: Low-friction ask?

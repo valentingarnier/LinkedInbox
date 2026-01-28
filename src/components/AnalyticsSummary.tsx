@@ -533,7 +533,6 @@ export function AnalyticsSummary({
               }`}
             >
               Insights
-              <span className="px-1.5 py-0.5 text-[10px] bg-[#6039ed]/10 text-[#6039ed] rounded font-medium">Beta</span>
               {activeTab === "insights" && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#6039ed] rounded-full" />
               )}

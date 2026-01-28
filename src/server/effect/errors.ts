@@ -55,6 +55,14 @@ export class AnalysisError extends Data.TaggedError("AnalysisError")<{
 }> {}
 
 /**
+ * External service errors
+ */
+export class EmailError extends Data.TaggedError("EmailError")<{
+  readonly message: string;
+  readonly cause?: unknown;
+}> {}
+
+/**
  * Union type for all app errors
  */
 export type AppError =
@@ -65,4 +73,5 @@ export type AppError =
   | LLMError
   | LLMConfigError
   | ValidationError
-  | AnalysisError;
+  | AnalysisError
+  | EmailError;

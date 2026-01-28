@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useAnalysis, useConversations } from "@/hooks";
 import { ConversationList } from "@/components/ConversationList";
@@ -13,6 +14,9 @@ import { Avatar, Button, Spinner } from "@/components/ui";
 import { Header, Logo } from "@/components/layout";
 import type { AnalyticsSummary as AnalyticsSummaryType } from "@/lib/supabase/types";
 import type { Conversation } from "@/lib/supabase/types";
+
+// Free tier limit
+const FREE_TIER_CONVERSATION_LIMIT = 50;
 
 // Compute prospect status counts from conversations
 function computeProspectStatusCounts(conversations: Conversation[]) {
@@ -141,6 +145,11 @@ export function DashboardContent({
     await refreshAnalytics();
   }, [clearLocalData, refreshConversations, refreshAnalytics]);
 
+  // Called when analysis starts - refresh to show "analyzing" status on conversations
+  const handleAnalysisStart = useCallback(async () => {
+    await refreshConversations();
+  }, [refreshConversations]);
+
   const {
     status: analysisStatus,
     isAnalyzing,
@@ -151,7 +160,17 @@ export function DashboardContent({
   } = useAnalysis({
     userId: user.id,
     onComplete: handleAnalysisComplete,
+    onStart: handleAnalysisStart,
   });
+
+  // Apply free tier limit (must be before any conditional returns)
+  const isOverLimit = displayConversations.length > FREE_TIER_CONVERSATION_LIMIT;
+  const limitedConversations = useMemo(() => 
+    displayConversations.slice(0, FREE_TIER_CONVERSATION_LIMIT),
+    [displayConversations]
+  );
+  const hiddenCount = displayConversations.length - limitedConversations.length;
+  const totalMessages = limitedConversations.reduce((acc, c) => acc + c.messageCount, 0);
 
   // Check initial analysis status (only on mount)
   useEffect(() => {
@@ -326,8 +345,6 @@ export function DashboardContent({
   }
 
   // Main dashboard view
-  const totalMessages = displayConversations.reduce((acc, c) => acc + c.messageCount, 0);
-
   return (
     <div className="h-screen flex flex-col bg-white">
       <Header>
@@ -336,7 +353,11 @@ export function DashboardContent({
             <Logo />
             <div className="h-6 w-px bg-zinc-200" />
             <p className="text-sm text-zinc-600">
-              <span className="font-semibold text-zinc-900">{displayConversations.length}</span> conversations
+              <span className="font-semibold text-zinc-900">{limitedConversations.length}</span>
+              {isOverLimit && (
+                <span className="text-zinc-400">/{displayConversations.length}</span>
+              )}
+              {" "}conversations
               <span className="text-zinc-300 mx-2">·</span>
               <span className="text-zinc-400">{totalMessages.toLocaleString()} messages</span>
             </p>
@@ -384,7 +405,12 @@ export function DashboardContent({
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    Analyze {analysisStatus.pending.toLocaleString()}
+                    Analyze {analysisStatus.pendingLimited?.toLocaleString() ?? analysisStatus.pending.toLocaleString()}
+                    {analysisStatus.isOverLimit && (
+                      <span className="text-white/60 text-xs ml-1">
+                        (of {analysisStatus.pending.toLocaleString()})
+                      </span>
+                    )}
                   </button>
                 )}
                 
@@ -416,6 +442,16 @@ export function DashboardContent({
               Import
             </Button>
 
+            <Link
+              href="/upgrade"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#6039ed] to-[#4c2bc4] hover:from-[#5030d0] hover:to-[#4020b0] text-white text-sm font-semibold rounded-lg transition-all shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              Upgrade
+            </Link>
+
             <Avatar src={user.avatarUrl} name={fullName} />
 
             <Button variant="ghost" onClick={handleSignOut}>
@@ -437,13 +473,43 @@ export function DashboardContent({
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="w-80 border-r border-zinc-100 overflow-hidden flex-shrink-0">
+        <aside className="w-80 border-r border-zinc-100 overflow-hidden flex-shrink-0 flex flex-col">
           <ConversationList
-            conversations={displayConversations}
+            conversations={limitedConversations}
             selectedId={selectedConversation?.id ?? null}
             onSelect={selectConversation}
             currentUserName={fullName}
           />
+          
+          {/* Upgrade prompt when over limit */}
+          {isOverLimit && (
+            <div className="p-4 bg-gradient-to-r from-[#6039ed]/10 to-purple-500/10 border-t border-[#6039ed]/20">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#6039ed]/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-[#6039ed]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-zinc-900">
+                    {hiddenCount} more conversation{hiddenCount > 1 ? 's' : ''} hidden
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Free plan limited to {FREE_TIER_CONVERSATION_LIMIT} conversations
+                  </p>
+                  <Link 
+                    href="/pricing" 
+                    className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#6039ed] hover:text-[#4c2bc4] transition-colors"
+                  >
+                    Upgrade to Pro
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </aside>
 
         <main className="flex-1 overflow-hidden">

@@ -3,7 +3,6 @@ import { Effect, pipe } from "effect";
 import {
   SupabaseServiceLive,
   getAuthenticatedUser,
-  query,
 } from "@/server/effect";
 import type { AnalysisStatus, AnalyticsSummary } from "@/lib/supabase/types";
 
@@ -11,6 +10,9 @@ interface ConversationStatus {
   id: string;
   analysis_status: AnalysisStatus;
 }
+
+// Free tier limit
+const FREE_TIER_CONVERSATION_LIMIT = 50;
 
 const STAGE_LABELS: Record<string, string> = {
   preparing: "Preparing conversations...",
@@ -25,6 +27,7 @@ const STAGE_LABELS: Record<string, string> = {
 interface StatusResult {
   total: number;
   pending: number;
+  pendingLimited: number; // Limited to free tier
   analyzing: number;
   completed: number;
   failed: number;
@@ -33,6 +36,7 @@ interface StatusResult {
   stageLabel: string | null;
   progress: number | null;
   progressTotal: number | null;
+  isOverLimit: boolean;
 }
 
 /**
@@ -85,22 +89,27 @@ const statusProgram = Effect.gen(function* () {
     catch: () => [] as ConversationStatus[],
   });
 
-  // Get analysis progress from analytics_summary
-  const analytics = yield* query<Pick<
-    AnalyticsSummary,
-    "analysis_stage" | "analysis_progress" | "analysis_total"
-  > | null>((client) =>
-    client
-      .from("analytics_summary")
-      .select("analysis_stage, analysis_progress, analysis_total")
-      .eq("user_id", user.id)
-      .single()
-  );
+  // Get analysis progress from analytics_summary (may not exist)
+  const analyticsResult = yield* Effect.tryPromise({
+    try: async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      const client = await createClient();
+      const { data } = await client
+        .from("analytics_summary")
+        .select("analysis_stage, analysis_progress, analysis_total")
+        .eq("user_id", user.id)
+        .single();
+      return data as Pick<AnalyticsSummary, "analysis_stage" | "analysis_progress" | "analysis_total"> | null;
+    },
+    catch: () => null,
+  });
+  const analytics = analyticsResult;
 
   if (!conversations?.length) {
     return {
       total: 0,
       pending: 0,
+      pendingLimited: 0,
       analyzing: 0,
       completed: 0,
       failed: 0,
@@ -109,6 +118,7 @@ const statusProgram = Effect.gen(function* () {
       stageLabel: null,
       progress: null,
       progressTotal: null,
+      isOverLimit: false,
     } satisfies StatusResult;
   }
 
@@ -128,15 +138,19 @@ const statusProgram = Effect.gen(function* () {
 
   const isComplete = statusCounts.pending === 0 && statusCounts.analyzing === 0;
   const stage = analytics?.analysis_stage || null;
+  const isOverLimit = statusCounts.pending > FREE_TIER_CONVERSATION_LIMIT;
+  const pendingLimited = Math.min(statusCounts.pending, FREE_TIER_CONVERSATION_LIMIT);
 
   return {
     total: conversations.length,
     ...statusCounts,
+    pendingLimited,
     isComplete,
     stage,
     stageLabel: stage ? STAGE_LABELS[stage] || stage : null,
     progress: analytics?.analysis_progress || null,
     progressTotal: analytics?.analysis_total || null,
+    isOverLimit,
   } satisfies StatusResult;
 });
 

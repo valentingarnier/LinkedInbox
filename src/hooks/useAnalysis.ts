@@ -25,6 +25,7 @@ export const STAGE_LABELS: Record<NonNullable<AnalysisStage>, string> = {
 export interface AnalysisStatus {
   total: number;
   pending: number;
+  pendingLimited: number; // Limited to free tier
   analyzing: number;
   completed: number;
   failed: number;
@@ -35,15 +36,17 @@ export interface AnalysisStatus {
   stageLabel: string | null;
   progress: number | null;
   progressTotal: number | null;
+  isOverLimit: boolean;
 }
 
 interface UseAnalysisOptions {
   userId: string;
   onComplete?: () => void;
+  onStart?: () => void; // Called after analysis starts and conversations are marked as "analyzing"
   pollingInterval?: number;
 }
 
-export function useAnalysis({ userId, onComplete, pollingInterval = 3000 }: UseAnalysisOptions) {
+export function useAnalysis({ userId, onComplete, onStart, pollingInterval = 3000 }: UseAnalysisOptions) {
   const [status, setStatus] = useState<AnalysisStatus | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +54,7 @@ export function useAnalysis({ userId, onComplete, pollingInterval = 3000 }: UseA
   // Use refs to avoid dependency loops
   const isAnalyzingRef = useRef(isAnalyzing);
   const onCompleteRef = useRef(onComplete);
+  const onStartRef = useRef(onStart);
   
   // Keep refs in sync
   useEffect(() => {
@@ -60,6 +64,10 @@ export function useAnalysis({ userId, onComplete, pollingInterval = 3000 }: UseA
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
+
+  useEffect(() => {
+    onStartRef.current = onStart;
+  }, [onStart]);
 
   const fetchStatus = useCallback(async (): Promise<AnalysisStatus | null> => {
     try {
@@ -122,6 +130,9 @@ export function useAnalysis({ userId, onComplete, pollingInterval = 3000 }: UseA
         setIsAnalyzing(false);
         return false;
       }
+
+      // Notify that analysis has started - conversations are now marked as "analyzing"
+      onStartRef.current?.();
 
       return true;
     } catch (err) {

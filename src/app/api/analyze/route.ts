@@ -22,6 +22,9 @@ import {
 import { analyzeTemplates } from "@/server/services/analysis/templates.effect";
 import { LLMConfigError } from "@/server/effect/errors";
 
+// Free tier limit
+const FREE_TIER_CONVERSATION_LIMIT = 50;
+
 /**
  * Main analysis program using Effect
  */
@@ -37,12 +40,19 @@ const analyzeProgram = Effect.gen(function* () {
   console.log("[Analyze API] User name:", userName);
 
   // Get pending conversations
-  const conversations = yield* getPendingConversations(user.id);
+  let conversations = yield* getPendingConversations(user.id);
   console.log("[Analyze API] Pending conversations found:", conversations?.length ?? 0);
 
   if (!conversations || conversations.length === 0) {
     console.log("[Analyze API] No conversations to analyze, returning early");
     return { message: "No conversations to analyze", analyzed: 0 };
+  }
+
+  // Apply free tier limit
+  const totalPending = conversations.length;
+  if (conversations.length > FREE_TIER_CONVERSATION_LIMIT) {
+    console.log(`[Analyze API] Limiting from ${conversations.length} to ${FREE_TIER_CONVERSATION_LIMIT} (free tier)`);
+    conversations = conversations.slice(0, FREE_TIER_CONVERSATION_LIMIT);
   }
 
   // Stage: Preparing

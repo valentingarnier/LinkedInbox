@@ -157,7 +157,7 @@ export default function SignupPage() {
                   Start analyzing in 2 minutes
                 </h1>
                 <p className="text-zinc-500">
-                  Free forever for up to 100 conversations
+                  Free forever for up to 50 conversations
                 </p>
               </div>
 

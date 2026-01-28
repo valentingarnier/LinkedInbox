@@ -5,6 +5,9 @@ import { createClient, fetchAllRows } from "@/lib/supabase/client";
 import type { Conversation, Message } from "@/lib/supabase/types";
 import type { LinkedInMessage, MessagesData, Conversation as LocalConversation } from "@/types/linkedin";
 
+// Free tier limit
+const FREE_TIER_CONVERSATION_LIMIT = 50;
+
 interface UseConversationsOptions {
   userId: string;
   initialConversations: Conversation[];
@@ -96,8 +99,6 @@ export function useConversations({ userId, initialConversations, onImportProgres
   }, [userId]);
 
   const importConversations = useCallback(async (data: MessagesData) => {
-    setLocalMessagesData(data);
-
     const supabase = createClient();
 
     // Fetch existing conversation IDs for this user
@@ -107,18 +108,44 @@ export function useConversations({ userId, initialConversations, onImportProgres
       { select: "linkedin_conversation_id", eq: { user_id: userId } }
     );
 
+    const existingCount = existingConvs.length;
     const existingConvIds = new Set(existingConvs.map((c) => c.linkedin_conversation_id));
 
     // Filter to only new conversations
-    const newConversations = data.conversations.filter(
+    let newConversations = data.conversations.filter(
       (conv) => !existingConvIds.has(conv.id)
     );
+
+    // Apply free tier limit - only import up to the limit
+    const remainingSlots = Math.max(0, FREE_TIER_CONVERSATION_LIMIT - existingCount);
+    
+    if (remainingSlots === 0) {
+      // User already has max conversations
+      console.log(`[Import] User already at limit (${existingCount}/${FREE_TIER_CONVERSATION_LIMIT})`);
+      onImportProgress?.(0, 0);
+      await refreshConversations();
+      return;
+    }
+
+    if (newConversations.length > remainingSlots) {
+      // Sort by most recent first, then take only what fits
+      newConversations = newConversations
+        .sort((a, b) => b.lastMessageDate.getTime() - a.lastMessageDate.getTime())
+        .slice(0, remainingSlots);
+      console.log(`[Import] Limited to ${remainingSlots} conversations (free tier limit: ${FREE_TIER_CONVERSATION_LIMIT})`);
+    }
 
     if (newConversations.length === 0) {
       onImportProgress?.(data.conversations.length, data.conversations.length);
       await refreshConversations();
       return;
     }
+
+    // Set local preview with limited conversations
+    setLocalMessagesData({
+      ...data,
+      conversations: newConversations,
+    });
 
     // Batch size for parallel processing
     const BATCH_SIZE = 50;
